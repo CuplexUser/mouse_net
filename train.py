@@ -83,13 +83,20 @@ class Game_settings:
             self.fov_y = random.randint(
                 Option_random_fov_y[0], Option_random_fov_y[1])
 
-        if Option_random_mouse_dpi:         
-            self.mouse_dpi = random.uniform(Option_random_mouse_dpi_min_max[0], Option_random_mouse_dpi_min_max[1])
+        if Option_random_mouse_dpi:
+            step_size = 100
+            steps = int(
+                (Option_random_mouse_dpi_min_max[1] - Option_random_mouse_dpi_min_max[0]) / step_size)
+            self.mouse_dpi = int(
+                (random.randint(0, steps) * step_size) + Option_random_mouse_dpi_min_max[0])
+        #   self.mouse_dpi = random.uniform(Option_random_mouse_dpi_min_max[0], Option_random_mouse_dpi_min_max[1])
 
         if Option_random_mouse_sensitivity:
             step_size = 0.05
-            steps = int((Option_random_mouse_sensitivity_min_max[1] - Option_random_mouse_sensitivity_min_max[0]) / step_size) + 1
-            self.mouse_sensitivity = round((random.randint(0,steps) * step_size) + Option_random_mouse_sensitivity_min_max[0], 2)           
+            steps = int(
+                (Option_random_mouse_sensitivity_min_max[1] - Option_random_mouse_sensitivity_min_max[0]) / step_size) + 1
+            self.mouse_sensitivity = min(Option_random_mouse_sensitivity_min_max[1], round(
+                (random.randint(0, steps) * step_size) + Option_random_mouse_sensitivity_min_max[0], 2))
 
     def update_target_position(self, prev_width, prev_height):
         scale_x = self.screen_width / prev_width
@@ -310,9 +317,9 @@ def train_net():
             torch.save(model.state_dict(), os.path.join(
                 save_path, f'mouse_net_epoch_{epoch + 1}.pth'))
             print(f'Model saved at epoch {epoch + 1}')
-        if (epoch == 4) or (epoch == 8): 
+        if (epoch == 10):
             lr = optimizer.param_groups[0]['lr']
-            lr = lr / 2
+            lr = lr / 10
             optimizer.param_groups[0]['lr'] = lr
             print(f'Changing learning rate to {lr }')
 
@@ -412,12 +419,12 @@ if __name__ == "__main__":
     Option_screen_height = 216
     Option_fov_x = 60
     Option_fov_y = 45
-    Option_mouse_dpi = 800
+    Option_mouse_dpi = 1000
     Option_mouse_sensitivity = 1.1
 
     # Data
     Option_delete_prev_data = True
-    
+
     # Generation settings
     Option_Generation = True
     Option_gen_time = 180
@@ -426,10 +433,10 @@ if __name__ == "__main__":
 
     # Train
     Option_train = True
-    Option_train_epochs = 30
+    Option_train_epochs = 40
     Option_train_batch_size = 8192
     Option_save_every_N_epoch = 20
-    Option_learning_rate = 0.0005
+    Option_learning_rate = 0.001
 
     # Speed - 1 is max
     Option_gen_speed_x = [-1, 1]
@@ -448,7 +455,7 @@ if __name__ == "__main__":
     Option_random_mouse_dpi_min_max = [800, 1000]
 
     Option_random_mouse_sensitivity = True
-    Option_random_mouse_sensitivity_min_max = [1.05, 1.2]
+    Option_random_mouse_sensitivity_min_max = [1.0, 1.2]
 
     # Testing model
     Option_test_model = False
