@@ -12,7 +12,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-
+from logic import config_reader
 
 class Data:
     def __init__(self, delete_prev_data=True):
@@ -34,7 +34,7 @@ class Data:
                     f'{target[0]} {target[1]} {target[2]} {target[3]} {target[4]} {target[5]} {target[6]} {target[7]} {target[8]} {target[9]} {target[10]} {target[11]}\n')
 
     def delete_data(self):
-        if Option_delete_prev_data:
+        if cfg.delete_prev_data:
             try:
                 os.remove(self.data_path)
             except:
@@ -55,48 +55,48 @@ class Data:
 
 class Game_settings:
     def __init__(self):
-        self.screen_width = Option_screen_width
-        self.screen_height = Option_screen_height
+        self.screen_width = cfg.screen_width
+        self.screen_height = cfg.screen_height
         self.screen_x_center = int(self.screen_width / 2)
         self.screen_y_center = int(self.screen_height / 2)
-        self.fov_x = Option_fov_x
-        self.fov_y = Option_fov_y
-        self.mouse_dpi = Option_mouse_dpi
-        self.mouse_sensitivity = Option_mouse_sensitivity
+        self.fov_x = cfg.fov_x
+        self.fov_y = cfg.fov_y
+        self.mouse_dpi = cfg.mouse_dpi
+        self.mouse_sensitivity = cfg.mouse_sensitivity
 
     def randomize(self):
-        if Option_random_screen_resolution:
+        if cfg.random_screen_resolution:
             prev_screen_width = self.screen_width
             prev_screen_height = self.screen_height
             self.screen_width = random.randint(
-                Option_random_screen_resolution_width[0], Option_random_screen_resolution_width[1])
+                cfg.random_screen_resolution_width[0], cfg.random_screen_resolution_width[1])
             self.screen_height = random.randint(
-                Option_random_screen_resolution_height[0], Option_random_screen_resolution_height[1])
+                cfg.random_screen_resolution_height[0], cfg.random_screen_resolution_height[1])
             self.update_target_position(prev_screen_width, prev_screen_height)
 
         self.screen_x_center = int(self.screen_width / 2)
         self.screen_y_center = int(self.screen_height / 2)
 
-        if Option_random_fov:
+        if cfg.random_fov:
             self.fov_x = random.randint(
-                Option_random_fov_x[0], Option_random_fov_x[1])
+                cfg.random_fov_x[0], cfg.random_fov_x[1])
             self.fov_y = random.randint(
-                Option_random_fov_y[0], Option_random_fov_y[1])
+                cfg.random_fov_y[0], cfg.random_fov_y[1])
 
-        if Option_random_mouse_dpi:
+        if cfg.random_mouse_dpi:
             step_size = 100
             steps = int(
-                (Option_random_mouse_dpi_min_max[1] - Option_random_mouse_dpi_min_max[0]) / step_size)
+                (cfg.random_mouse_dpi_min_max[1] - cfg.random_mouse_dpi_min_max[0]) / step_size)
             self.mouse_dpi = int(
-                (random.randint(0, steps) * step_size) + Option_random_mouse_dpi_min_max[0])
-        #   self.mouse_dpi = random.uniform(Option_random_mouse_dpi_min_max[0], Option_random_mouse_dpi_min_max[1])
+                (random.randint(0, steps) * step_size) + cfg.random_mouse_dpi_min_max[0])
+        #   self.mouse_dpi = random.uniform(cfg.random_mouse_dpi_min_max[0], cfg.random_mouse_dpi_min_max[1])
 
-        if Option_random_mouse_sensitivity:
+        if cfg.random_mouse_sensitivity:
             step_size = 0.05
             steps = int(
-                (Option_random_mouse_sensitivity_min_max[1] - Option_random_mouse_sensitivity_min_max[0]) / step_size) + 1
-            self.mouse_sensitivity = min(Option_random_mouse_sensitivity_min_max[1], round(
-                (random.randint(0, steps) * step_size) + Option_random_mouse_sensitivity_min_max[0], 2))
+                (cfg.random_mouse_sensitivity_min_max[1] - cfg.random_mouse_sensitivity_min_max[0]) / step_size) + 1
+            self.mouse_sensitivity = min(cfg.random_mouse_sensitivity_min_max[1], round(
+                (random.randint(0, steps) * step_size) + cfg.random_mouse_sensitivity_min_max[0], 2))
 
     def update_target_position(self, prev_width, prev_height):
         scale_x = self.screen_width / prev_width
@@ -154,8 +154,8 @@ class Target:
             self.h // 2, game_settings.screen_height - self.h // 2)
 
     def randomize_velocity(self):
-        self.dx += random.uniform(Option_gen_speed_x[0], Option_gen_speed_x[1])
-        self.dy += random.uniform(Option_gen_speed_y[0], Option_gen_speed_y[1])
+        self.dx += random.uniform(cfg.gen_speed_x[0], cfg.gen_speed_x[1])
+        self.dy += random.uniform(cfg.gen_speed_y[0], cfg.gen_speed_y[1])
 
         self.dx = max(-1, min(self.dx, 1))
         self.dy = max(-1, min(self.dy, 1))
@@ -212,7 +212,7 @@ class Visualisation(threading.Thread):
             if data is None:
                 break
 
-            if Option_gen_visualise_draw_line:
+            if cfg.gen_visualise_draw_line:
                 x, y = target.adjust_mouse_movement(
                     target_x=target.x, target_y=target.y, game_settings=game_settings)
                 cv2.line(image, (int(game_settings.screen_x_center), int(
@@ -281,17 +281,17 @@ def train_net():
     print(f'Starting train mouse_net model.\nUsing device: {device}.')
     dataset = CustomDataset(data.data_path)
     dataloader = DataLoader(
-        dataset, batch_size=Option_train_batch_size, shuffle=True, pin_memory=True)
+        dataset, batch_size=cfg.train_batch_size, shuffle=True, pin_memory=True)
     model = Mouse_net().to(device)
 
     criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=Option_learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=cfg.learning_rate)
 
-    epochs = Option_train_epochs
+    epochs = cfg.train_epochs
     loss_values = []
 
     start_time = time.time()
-    print(f'Learning rate: {Option_learning_rate}')
+    print(f'Learning rate: {cfg.learning_rate}')
 
     for epoch in range(epochs):
         epoch_losses = []
@@ -313,7 +313,7 @@ def train_net():
         print(f'Epoch {epoch + 1}/{epochs}',
               'Loss: {:.5f}'.format(epoch_loss), format_time(train_time))
 
-        if (epoch + 1) % Option_save_every_N_epoch == 0:
+        if (epoch + 1) % cfg.save_every_N_epoch == 0:
             torch.save(model.state_dict(), os.path.join(
                 save_path, f'mouse_net_epoch_{epoch + 1}.pth'))
             print(f'Model saved at epoch {epoch + 1}')
@@ -356,7 +356,7 @@ def test_net():  # need to be replaced a newer function
 
 
 def gen_data():
-    pbar = tqdm(total=Option_gen_time, desc='Data generation')
+    pbar = tqdm(total=cfg.gen_time, desc='Data generation')
 
     global target
     target = Target(
@@ -364,8 +364,8 @@ def gen_data():
         y=random.randint(0, game_settings.screen_height),
         w=random.randint(4, game_settings.screen_width),
         h=random.randint(4, game_settings.screen_height),
-        dx=random.uniform(Option_gen_speed_x[0], Option_gen_speed_x[1]),
-        dy=random.uniform(Option_gen_speed_y[0], Option_gen_speed_y[1]))
+        dx=random.uniform(cfg.gen_speed_x[0], cfg.gen_speed_x[1]),
+        dy=random.uniform(cfg.gen_speed_y[0], cfg.gen_speed_y[1]))
 
     start_time = time.time()
     last_update_time = time.time()
@@ -382,7 +382,7 @@ def gen_data():
         target.randomize_position()
         target.randomize_velocity()
 
-        if Option_gen_visualise:
+        if cfg.gen_visualise:
             vision.queue.put(target)
 
         x, y = target.adjust_mouse_movement(
@@ -403,85 +403,36 @@ def gen_data():
         pbar.n = int(last_update_time - start_time)
         pbar.refresh()
 
-        if int(last_update_time - start_time) >= Option_gen_time:
-            if Option_gen_visualise:
+        if int(last_update_time - start_time) >= cfg.gen_time:
+            if cfg.gen_visualise:
                 vision.queue.put(None)  # call break
             data.stop()
             pbar.close()
             break
 
 
-if __name__ == "__main__":
-    ###################### Options ######################
-
-    # Game settings
-    Option_screen_width = 384
-    Option_screen_height = 216
-    Option_fov_x = 60
-    Option_fov_y = 45
-    Option_mouse_dpi = 1000
-    Option_mouse_sensitivity = 1.1
-
-    # Data
-    Option_delete_prev_data = True
-
-    # Generation settings
-    Option_Generation = True
-    Option_gen_time = 180
-    Option_gen_visualise = True
-    Option_gen_visualise_draw_line = True
-
-    # Train
-    Option_train = True
-    Option_train_epochs = 40
-    Option_train_batch_size = 8192
-    Option_save_every_N_epoch = 20
-    Option_learning_rate = 0.001
-
-    # Speed - 1 is max
-    Option_gen_speed_x = [-1, 1]
-    Option_gen_speed_y = [-1, 1]
-
-    # Game settings - random options
-    Option_random_screen_resolution = False
-    Option_random_screen_resolution_width = [150, 600]
-    Option_random_screen_resolution_height = [150, 600]
-
-    Option_random_fov = False
-    Option_random_fov_x = [45, 60]
-    Option_random_fov_y = [45, 45]
-
-    Option_random_mouse_dpi = False
-    Option_random_mouse_dpi_min_max = [800, 1000]
-
-    Option_random_mouse_sensitivity = True
-    Option_random_mouse_sensitivity_min_max = [1.0, 1.2]
-
-    # Testing model
-    Option_test_model = False
-
-    #####################################################
-
+if __name__ == "__main__":    
+    cfg = config_reader.cfg    
     game_settings = Game_settings()
 
-    data = Data(delete_prev_data=Option_delete_prev_data)
+    data = Data(delete_prev_data = cfg.delete_prev_data)
 
-    if Option_gen_visualise:
+    if cfg.gen_visualise:
         vision = Visualisation()
 
-    if Option_train or Option_test_model:
+    if cfg.train or cfg.test_model:
         device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    if Option_Generation:
+    if cfg.generate_data:
         gen_data()
 
-    if Option_gen_visualise:
+    if cfg.gen_visualise:
         vision.stop()
 
-    if Option_train:
+    if cfg.train:
         train_net()
 
-    if Option_test_model:
+    if cfg.test_model:
         test_net()
         data.stop()
     else:
