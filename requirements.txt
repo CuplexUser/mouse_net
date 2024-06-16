@@ -1,0 +1,6 @@
+cuda_python
+configparser
+torch>=2.2.2
+numpy
+tqdm>=4.66.4
+matplotlib>=3.9.0

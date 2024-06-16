@@ -280,8 +280,7 @@ def train_net():
         os.makedirs(save_path)
     print(f'Starting train mouse_net model.\nUsing device: {device}.')
     dataset = CustomDataset(data.data_path)
-    dataloader = DataLoader(
-        dataset, batch_size=cfg.train_batch_size, shuffle=True, pin_memory=True)
+    dataloader = DataLoader(dataset, batch_size=cfg.train_batch_size, shuffle=True, pin_memory=True)
     model = Mouse_net().to(device)
 
     criterion = nn.MSELoss()
